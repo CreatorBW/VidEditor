@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 
 export interface VideoFile {
   filename: string;
@@ -97,6 +97,8 @@ interface VideoEditorContextType {
   videoFiles: VideoFile[];
   setVideoFiles: (files: VideoFile[]) => void;
   selectedFiles: VideoFile[];
+  segmentsLoading: boolean;
+  segmentsError: string | null;
   
   // Markers
   markers: Marker[];
@@ -147,6 +149,24 @@ export const VideoEditorProvider: React.FC<{ children: ReactNode }> = ({ childre
     { filename: '1753880560000.ts', timestamp: 1753880560000, duration: 35, selected: true },
     { filename: '1753880595000.ts', timestamp: 1753880595000, duration: 30, selected: false },
   ]);
+  const [segmentsLoading, setSegmentsLoading] = useState(true);
+  const [segmentsError, setSegmentsError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await fetch('/segments');
+        if (!res.ok) throw new Error('Failed to load segments');
+        const data: VideoFile[] = await res.json();
+        setVideoFiles(data.map(f => ({ ...f, selected: false })));
+      } catch (err: any) {
+        setSegmentsError(err.message);
+      } finally {
+        setSegmentsLoading(false);
+      }
+    };
+    load();
+  }, []);
   
   const [markers, setMarkers] = useState<Marker[]>([]);
   const [savedClips, setSavedClips] = useState<SavedClip[]>([]);
@@ -230,6 +250,8 @@ export const VideoEditorProvider: React.FC<{ children: ReactNode }> = ({ childre
       setOutPoint,
       videoFiles,
       setVideoFiles,
+      segmentsLoading,
+      segmentsError,
       selectedFiles,
       markers,
       setMarkers,
