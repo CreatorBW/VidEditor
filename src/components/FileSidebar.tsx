@@ -7,7 +7,7 @@ import { formatDuration } from "@/utils/timestampService";
 import { format } from "date-fns";
 
 const FileSidebar = () => {
-  const { videoFiles, setVideoFiles } = useVideoEditor();
+  const { videoFiles, setVideoFiles, segmentsLoading, segmentsError } = useVideoEditor();
   const [searchTerm, setSearchTerm] = useState("");
 
   const filteredFiles = videoFiles.filter(file =>
@@ -47,14 +47,21 @@ const FileSidebar = () => {
       </div>
 
       {/* File List */}
-      <div className="flex-1 overflow-y-auto p-2">
-        <div className="space-y-2 max-h-[60vh] overflow-y-auto">
-          {filteredFiles.map((file) => {
-            const startTime = new Date(file.timestamp);
-            const fileSizeMB = (file.duration * 0.18).toFixed(1); // Rough estimate
-            
-            return (
-              <div
+        <div className="flex-1 overflow-y-auto p-2">
+          {segmentsLoading && (
+            <div className="p-4 text-gray-400">Loading segments...</div>
+          )}
+          {segmentsError && (
+            <div className="p-4 text-red-400">{segmentsError}</div>
+          )}
+          {!segmentsLoading && !segmentsError && (
+            <div className="space-y-2 max-h-[60vh] overflow-y-auto">
+              {filteredFiles.map((file) => {
+                const startTime = new Date(file.timestamp);
+                const fileSizeMB = (file.duration * 0.18).toFixed(1); // Rough estimate
+
+                return (
+                  <div
                 key={file.filename}
                 className={`p-3 rounded-lg border cursor-pointer transition-colors ${
                   file.selected
@@ -86,10 +93,11 @@ const FileSidebar = () => {
                   </div>
                 </div>
               </div>
-            );
-          })}
+              );
+            })}
+          </div>
+          )}
         </div>
-      </div>
     </div>
   );
 };
